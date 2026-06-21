@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Money Converter</title>
+    <link rel="stylesheet" href="/public/style.css">
+</head>
+<body class="bg-gray-100">
+    <form action="/convert" method="POST">
+        <input type="number" name="amount" placeholder="Amount" required>
+        <input type="text" name="from" placeholder="From (e.g. USD)" required>
+        <input type="text" name="to" placeholder="To (e.g. TWD)" required>
+        <button type="submit">Convert</button>
+    </form>
+    {{ if .Result }}
+        <p>Result: {{ .Result }}</p>
+    {{ end }}
+</body>
+</html>
