@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"html/template"
-	"net/http"
-	"strconv"
-
-	// Import your internal logic package
-	"github.com/mewteebee/money-converter/internal/converter"
+    "log"
+    "net/http"
+    "os"
+    "strconv"
+    "github.com/joho/godotenv"
+    "github.com/amtsoft/money-converter/internal/converter"
 )
 
 // PageData holds the data to be rendered in our HTML template
