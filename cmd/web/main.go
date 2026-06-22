@@ -16,42 +16,47 @@ type PageData struct {
 }
 
 func main() {
-	// Parse the template file
-	tmpl := template.Must(template.ParseFiles("cmd/web/templates/index.html"))
+    // 1. Load config and check keys
+    if err := godotenv.Load(); err != nil {
+        log.Println("No .env file found, relying on system environment variables")
+    }
+    apiKey := os.Getenv("API_KEY")
+    if apiKey == "" {
+        log.Fatal("API_KEY is not set in environment")
+    }
 
-	// Handle GET requests to show the form
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		tmpl.Execute(w, nil)
-	})
+    // 2. Parse templates
+    tmpl := template.Must(template.ParseFiles("cmd/web/templates/index.html"))
 
-	// Handle POST requests for conversion logic
-	http.HandleFunc("/convert", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
+    // 3. Register routes
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        tmpl.Execute(w, nil)
+    })
 
-		// Retrieve form values
-		amountStr := r.FormValue("amount")
-		from := r.FormValue("from")
-		to := r.FormValue("to")
+    http.HandleFunc("/convert", func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != http.MethodPost {
+            http.Redirect(w, r, "/", http.StatusSeeOther)
+            return
+        }
 
-		amount, _ := strconv.ParseFloat(amountStr, 64)
+        // Parse form
+        amount, _ := strconv.ParseFloat(r.FormValue("amount"), 64)
+        from := r.FormValue("from")
+        to := r.FormValue("to")
 
-		// Call the logic from internal/converter/logic.go
-		result := converter.Convert(converter.ConversionRequest{
-			Amount:       amount,
-			FromCurrency: from,
-			ToCurrency:   to,
-		})
+        // Fetch live rate using the apiKey
+        rate, err := converter.GetRate(apiKey, from, to)
+        if err != nil {
+            http.Error(w, "Failed to fetch exchange rate", http.StatusInternalServerError)
+            return
+        }
 
-		// Execute template with the result
-		tmpl.Execute(w, PageData{Result: result})
-	})
+        // Calculate and execute template
+        result := converter.Convert(converter.ConversionRequest{Amount: amount}, rate)
+        tmpl.Execute(w, PageData{Result: result})
+    })
 
-	fmt.Println("Starting server on :8080")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		fmt.Println("Error starting server:", err)
-	}
+    // 4. Start server
+    fmt.Println("Starting server on :8080")
+    log.Fatal(http.ListenAndServe(":8080", nil))
 }
