@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -28,16 +29,29 @@ func main() {
 		log.Fatal("API_KEY is not set in environment")
 	}
 
-	// 2. Parse templates
+	// 2. Fetch supported currency codes once at startup and cache in memory
+	codes, err := converter.GetSupportedCodes(apiKey)
+	if err != nil {
+		log.Fatalf("Failed to fetch supported currency codes: %v", err)
+	}
+
+	// 3. Parse templates
 	tmpl := template.Must(template.ParseFiles("cmd/web/templates/index.html"))
 
-	// 3. Serve static assets (CSS, etc.) from /public
+	// 4. Serve static assets (CSS, etc.) from /public
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
-	// 4. Register routes
+	// 5. Register routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if err := tmpl.Execute(w, nil); err != nil {
 			log.Printf("template execute error: %v", err)
+		}
+	})
+
+	http.HandleFunc("/codes", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(codes); err != nil {
+			log.Printf("codes encode error: %v", err)
 		}
 	})
 
@@ -71,7 +85,7 @@ func main() {
 		}
 	})
 
-	// 4. Start server
+	// 6. Start server
 	fmt.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
