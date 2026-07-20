@@ -56,21 +56,14 @@ func main() {
 	})
 
 	http.HandleFunc("/convert", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		// Parse form
-		amount, err := strconv.ParseFloat(r.FormValue("amount"), 64)
+		amount, err := strconv.ParseFloat(r.URL.Query().Get("amount"), 64)
 		if err != nil {
 			http.Error(w, "Amount must be a valid number", http.StatusBadRequest)
 			return
 		}
-		from := r.FormValue("from")
-		to := r.FormValue("to")
+		from := r.URL.Query().Get("from")
+		to := r.URL.Query().Get("to")
 
-		// Fetch live rate using the apiKey
 		rate, err := converter.GetRate(apiKey, from, to)
 		if err != nil {
 			log.Printf("GetRate error: %v", err)
@@ -78,10 +71,11 @@ func main() {
 			return
 		}
 
-		// Calculate and execute template
 		result := converter.Convert(converter.ConversionRequest{Amount: amount}, rate)
-		if err := tmpl.Execute(w, PageData{Result: result}); err != nil {
-			log.Printf("template execute error: %v", err)
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(PageData{Result: result}); err != nil {
+			log.Printf("convert encode error: %v", err)
 		}
 	})
 

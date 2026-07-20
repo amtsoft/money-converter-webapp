@@ -6,14 +6,42 @@
     <link rel="stylesheet" href="/public/style.css">
 </head>
 <body class="bg-gray-100">
-    <form action="/convert" method="POST">
-        <input type="number" name="amount" placeholder="Amount" required>
-        <input type="text" name="from" placeholder="From (e.g. USD)" required>
-        <input type="text" name="to" placeholder="To (e.g. TWD)" required>
-        <button type="submit">Convert</button>
-    </form>
-    {{ if .Result }}
-        <p>Result: {{ .Result }}</p>
-    {{ end }}
+
+    <main>
+        <section id="converter">
+            <input type="number" id="amount" placeholder="Amount">
+
+            <select id="from"></select>
+            <select id="to"></select>
+
+            <div id="result"></div>
+        </section>
+
+        <section id="favorites">
+            <h2>Favorites</h2>
+            <div class="favorite-row">
+                <select class="fav-from" data-index="0"></select>
+                <select class="fav-to" data-index="0"></select>
+                <button class="fav-load" data-index="0">Load</button>
+            </div>
+            <div class="favorite-row">
+                <select class="fav-from" data-index="1"></select>
+                <select class="fav-to" data-index="1"></select>
+                <button class="fav-load" data-index="1">Load</button>
+            </div>
+            <div class="favorite-row">
+                <select class="fav-from" data-index="2"></select>
+                <select class="fav-to" data-index="2"></select>
+                <button class="fav-load" data-index="2">Load</button>
+            </div>
+        </section>
+
+        <section id="history">
+            <h2>History</h2>
+            <div id="history-list"></div>
+        </section>
+    </main>
+
+    <script src="/public/app.js"></script>
 </body>
 </html>
